@@ -24,7 +24,7 @@ export default function Navbar({ tab, setTab, txCount }) {
         >
           Finance Advisor
         </div>
-        <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
+        <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 ,marginLeft: 10}}>
           {txCount} transactions · March 2025
         </div>
       </div>
