@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { SUGGESTIONS } from "../constants";
+import { useFinance } from "../context/FinanceContext";
 import { buildSystemPrompt, btnStyle } from "../utils";
 
 
 const GEMINI_API_KEY = "AIzaSyB4x0oXOsd9zhrjl8rE1xw13VMQI98XehY";
 
-export default function Chat({ transactions, budgets }) {
+// ─── Chat ───────────────────────────────────────────────────────────────────
+// Experimental AI advisory interface using a minimal rule-based prompt generator.
 
+export default function Chat() {
+  const { transactions, budgets, goals = [] } = useFinance();
   const [messages, setMessages] = useState([
     {
       role: "assistant",

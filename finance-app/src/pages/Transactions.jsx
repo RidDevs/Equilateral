@@ -2,14 +2,13 @@ import { useState, useMemo, useRef } from "react";
 import { CATEGORY_COLORS } from "../constants";
 import { parseCSV, btnStyle } from "../utils";
 
+import { useFinance } from "../context/FinanceContext";
+
 // ─── Transactions ─────────────────────────────────────────────────────────────
 // Filterable, searchable transaction list with CSV import.
-// Props:
-//   transactions  (array)  — all transactions
-//   onImport      (fn)     — called with parsed array after CSV upload
-//   onReset       (fn)     — resets to sample data
 
-export default function Transactions({ transactions, onImport, onReset }) {
+export default function Transactions() {
+  const { transactions, addTransactions: onImport, resetToSample: onReset } = useFinance();
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
   const fileRef = useRef();

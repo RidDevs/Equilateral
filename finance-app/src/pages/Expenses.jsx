@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { btnStyle } from "../utils";
+import { useFinance } from "../context/FinanceContext";
 
-export default function Expenses({ onAdd }) {
+export default function Expenses() {
+  const { addTransactions: onAdd } = useFinance();
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Food");

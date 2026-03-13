@@ -12,23 +12,22 @@ import StatCard from "../components/StatCard";
 import { CATEGORY_COLORS } from "../constants";
 import { fmt, evaluateGoalFeasibility, btnStyle } from "../utils";
 
+import { useFinance } from "../context/FinanceContext";
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 // Main overview page showing summary stats, spending pie chart, budget bars, and goals.
-// Props:
-//   transactions  (array)  — all transactions
-//   budgets       (object) — { category: limitAmount }
-//   goals         (array)  — savings goals
-//   addGoal, updateGoal, addSavingsToGoal, deleteGoal
 
-export default function Dashboard({
-  transactions,
-  budgets,
-  goals = [],
-  addGoal,
-  updateGoal,
-  addSavingsToGoal,
-  deleteGoal,
-}) {
+export default function Dashboard() {
+  const {
+    transactions,
+    budgets,
+    goals = [],
+    addGoal,
+    updateGoal,
+    addSavingsToGoal,
+    deleteGoal,
+  } = useFinance();
+
   const [goalForm, setGoalForm] = useState({
     name: "",
     targetAmount: "",
