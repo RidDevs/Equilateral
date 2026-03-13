@@ -1,13 +1,17 @@
 import { TABS } from "../constants";
 
+import { useFinance } from "../context/FinanceContext";
+
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 // Top navigation bar with app title and tab switcher.
 // Props:
 //   tab          (string)              — currently active tab
 //   setTab       (fn)                  — tab setter
-//   txCount      (number)              — transaction count shown in subtitle
 
-export default function Navbar({ tab, setTab, txCount }) {
+export default function Navbar({ tab, setTab }) {
+  const { transactions } = useFinance();
+  const txCount = transactions?.length || 0;
+
   return (
     <div
       style={{

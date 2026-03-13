@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useTransactions, useBudgets, useGoals } from "./hooks";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
@@ -8,9 +7,6 @@ import Budgets from "./pages/Budget";
 import Expenses from "./pages/expenses";
 
 export default function App() {
-  const { transactions, addTransactions, resetToSample } = useTransactions();
-  const { budgets, setBudgets } = useBudgets();
-  const { goals, addGoal, updateGoal, addSavingsToGoal, deleteGoal } = useGoals();
   const [tab, setTab] = useState("Dashboard");
 
   return (
@@ -42,40 +38,14 @@ export default function App() {
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 20px" }}>
         {/* ── Navigation ── */}
-        <Navbar tab={tab} setTab={setTab} txCount={transactions.length} />
+        <Navbar tab={tab} setTab={setTab} />
 
         {/* ── Page routing ── */}
-        {tab === "Dashboard" && (
-          <Dashboard
-            transactions={transactions}
-            budgets={budgets}
-            goals={goals}
-            addGoal={addGoal}
-            updateGoal={updateGoal}
-            addSavingsToGoal={addSavingsToGoal}
-            deleteGoal={deleteGoal}
-          />
-        )}
-        {tab === "Transactions" && (
-          <Transactions
-            transactions={transactions}
-            onImport={addTransactions}
-            onReset={resetToSample}
-          />
-        )}
-        {tab === "AI Advisor" && (
-          <Chat transactions={transactions} budgets={budgets} goals={goals} />
-        )}
-        {tab === "Budgets" && (
-          <Budgets
-            budgets={budgets}
-            setBudgets={setBudgets}
-            transactions={transactions}
-          />
-        )}
-        {tab === "Add expense/income" && (
-          <Expenses onAdd={addTransactions} />
-        )}
+        {tab === "Dashboard" && <Dashboard />}
+        {tab === "Transactions" && <Transactions />}
+        {tab === "AI Advisor" && <Chat />}
+        {tab === "Budgets" && <Budgets />}
+        {tab === "Add expense/income" && <Expenses />}
       </div>
     </div>
   );

@@ -1,14 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { CATEGORY_COLORS } from "../constants";
 
-// ─── Budgets ──────────────────────────────────────────────────────────────────
-// Editable budget limits per category with visual progress bars.
-// Props:
-//   budgets        (object)  — { category: limitAmount }
-//   setBudgets     (fn)      — updater for budgets state
-//   transactions   (array)   — all transactions (for spent calculation)
+import { useFinance } from "../context/FinanceContext";
 
-export default function Budgets({ budgets, setBudgets, transactions }) {
+// ─── Budget ───────────────────────────────────────────────────────────────────
+// Category limits and progress vs actual spending.
+
+export default function Budget() {
+  const { budgets, setBudgets, transactions } = useFinance();
+  const [editCat, setEditCat] = useState(null);
   const catTotals = useMemo(() => {
     const t = {};
     transactions
