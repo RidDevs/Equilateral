@@ -1,71 +1,136 @@
-// ─── SAMPLE DATA ────────────────────────────────────────────────────────────
-export const SAMPLE_TRANSACTIONS = [
-  { id: 1,  date: "2025-03-01", description: "Salary credit",         amount: 65000, type: "income",  category: "Income" },
-  { id: 2,  date: "2025-03-02", description: "Zomato order",          amount: -480,  type: "expense", category: "Food" },
-  { id: 3,  date: "2025-03-03", description: "Uber ride",             amount: -220,  type: "expense", category: "Transport" },
-  { id: 4,  date: "2025-03-04", description: "Amazon purchase",       amount: -1850, type: "expense", category: "Shopping" },
-  { id: 5,  date: "2025-03-05", description: "Swiggy order",          amount: -350,  type: "expense", category: "Food" },
-  { id: 6,  date: "2025-03-06", description: "Electricity bill",      amount: -1200, type: "expense", category: "Bills" },
-  { id: 7,  date: "2025-03-07", description: "Netflix subscription",  amount: -649,  type: "expense", category: "Entertainment" },
-  { id: 8,  date: "2025-03-08", description: "Zomato order",          amount: -620,  type: "expense", category: "Food" },
-  { id: 9,  date: "2025-03-09", description: "Petrol",                amount: -800,  type: "expense", category: "Transport" },
-  { id: 10, date: "2025-03-10", description: "Flipkart order",        amount: -2200, type: "expense", category: "Shopping" },
-  { id: 11, date: "2025-03-11", description: "Gym membership",        amount: -1500, type: "expense", category: "Health" },
-  { id: 12, date: "2025-03-12", description: "Swiggy order",          amount: -410,  type: "expense", category: "Food" },
-  { id: 13, date: "2025-03-13", description: "Ola ride",              amount: -185,  type: "expense", category: "Transport" },
-  { id: 14, date: "2025-03-14", description: "Mobile recharge",       amount: -299,  type: "expense", category: "Bills" },
-  { id: 15, date: "2025-03-15", description: "Zomato order",          amount: -730,  type: "expense", category: "Food" },
-  { id: 16, date: "2025-03-16", description: "Freelance payment",     amount: 12000, type: "income",  category: "Income" },
-  { id: 17, date: "2025-03-17", description: "Amazon order",          amount: -950,  type: "expense", category: "Shopping" },
-  { id: 18, date: "2025-03-18", description: "Pharmacy",              amount: -380,  type: "expense", category: "Health" },
-  { id: 19, date: "2025-03-19", description: "Uber ride",             amount: -310,  type: "expense", category: "Transport" },
-  { id: 20, date: "2025-03-20", description: "Swiggy order",          amount: -520,  type: "expense", category: "Food" },
-  { id: 21, date: "2025-03-21", description: "Internet bill",         amount: -899,  type: "expense", category: "Bills" },
-  { id: 22, date: "2025-03-22", description: "Spotify",               amount: -119,  type: "expense", category: "Entertainment" },
-  { id: 23, date: "2025-03-23", description: "Zomato order",          amount: -890,  type: "expense", category: "Food" },
-  { id: 24, date: "2025-03-24", description: "Petrol",                amount: -750,  type: "expense", category: "Transport" },
-  { id: 25, date: "2025-03-25", description: "Myntra shopping",       amount: -1600, type: "expense", category: "Shopping" },
-  { id: 26, date: "2025-03-26", description: "Zomato order",          amount: -460,  type: "expense", category: "Food" },
-  { id: 27, date: "2025-03-27", description: "Movie tickets",         amount: -600,  type: "expense", category: "Entertainment" },
-  { id: 28, date: "2025-03-28", description: "Swiggy order",          amount: -390,  type: "expense", category: "Food" },
-  { id: 29, date: "2025-03-29", description: "Electricity advance",   amount: -500,  type: "expense", category: "Bills" },
-  { id: 30, date: "2025-03-30", description: "Uber ride",             amount: -260,  type: "expense", category: "Transport" },
-];
+import { KEYWORD_MAP } from "../constants";
 
-export const DEFAULT_BUDGETS = {
-  Food: 3000,
-  Transport: 2000,
-  Shopping: 3000,
-  Bills: 2500,
-  Entertainment: 1000,
-  Health: 1500,
-};
+// ─── FORMAT CURRENCY ─────────────────────────────────────────────────────────
+export function fmt(n) {
+  return `₹${Math.round(n).toLocaleString("en-IN")}`;
+}
 
-export const CATEGORY_COLORS = {
-  Food: "#1D9E75",
-  Transport: "#378ADD",
-  Shopping: "#D85A30",
-  Bills: "#BA7517",
-  Entertainment: "#7F77DD",
-  Health: "#D4537E",
-  Income: "#639922",
-};
+// ─── KEYWORD AUTO-CATEGORIZER ────────────────────────────────────────────────
+export function categorize(description) {
+  const d = description.toLowerCase();
+  for (const [cat, keywords] of Object.entries(KEYWORD_MAP)) {
+    if (keywords.some((k) => d.includes(k))) return cat;
+  }
+  return "Other";
+}
 
-export const KEYWORD_MAP = {
-  Food:          ["zomato", "swiggy", "restaurant", "food", "hotel", "cafe", "blinkit", "dunzo"],
-  Transport:     ["uber", "ola", "petrol", "fuel", "metro", "bus", "rapido", "cab"],
-  Shopping:      ["amazon", "flipkart", "myntra", "ajio", "meesho", "mall", "purchase"],
-  Bills:         ["electricity", "internet", "wifi", "recharge", "mobile", "broadband", "water"],
-  Entertainment: ["netflix", "spotify", "prime", "hotstar", "movie", "ticket", "game"],
-  Health:        ["pharmacy", "medicine", "hospital", "doctor", "gym", "clinic"],
-  Income:        ["salary", "credit", "freelance", "payment received", "cashback"],
-};
+// ─── CSV PARSER ──────────────────────────────────────────────────────────────
+export function parseCSV(text) {
+  const lines = text.trim().split("\n").filter(Boolean);
+  if (lines.length < 2) return [];
+  const headers = lines[0]
+    .split(",")
+    .map((h) => h.trim().toLowerCase().replace(/"/g, ""));
+  return lines
+    .slice(1)
+    .map((line, i) => {
+      const cols = line.split(",").map((c) => c.trim().replace(/"/g, ""));
+      const row = {};
+      headers.forEach((h, idx) => {
+        row[h] = cols[idx] || "";
+      });
+      const desc =
+        row.description ||
+        row.narration ||
+        row.details ||
+        row.particulars ||
+        "Transaction";
+      const rawAmt =
+        parseFloat(
+          (row.amount || row.debit || row.credit || "0").replace(
+            /[^0-9.-]/g,
+            ""
+          )
+        ) || 0;
+      const amount =
+        row.type === "income" || row.credit
+          ? Math.abs(rawAmt)
+          : -Math.abs(rawAmt);
+      return {
+        id: Date.now() + i,
+        date: row.date || new Date().toISOString().slice(0, 10),
+        description: desc,
+        amount,
+        type: amount >= 0 ? "income" : "expense",
+        category: categorize(desc),
+      };
+    })
+    .filter((r) => r.amount !== 0);
+}
 
-export const TABS = ["Dashboard", "Transactions", "AI Advisor", "Budgets"];
+// ─── BUILD AI SYSTEM PROMPT ───────────────────────────────────────────────────
+export function buildSystemPrompt(transactions, budgets) {
+  const expenses = transactions.filter((t) => t.type === "expense");
+  const income = transactions.filter((t) => t.type === "income");
+  const totalIncome = income.reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = Math.abs(
+    expenses.reduce((s, t) => s + t.amount, 0)
+  );
+  const savingsRate =
+    totalIncome > 0
+      ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100)
+      : 0;
 
-export const SUGGESTIONS = [
-  "Where am I overspending?",
-  "How can I save ₹3,000 this month?",
-  "Am I on track financially?",
-  "What's my biggest financial risk?",
-];
+  const catTotals = {};
+  expenses.forEach((t) => {
+    catTotals[t.category] = (catTotals[t.category] || 0) + Math.abs(t.amount);
+  });
+
+  const topCats = Object.entries(catTotals)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(
+      ([cat, total]) =>
+        `  ${cat}: ₹${Math.round(total)} (${Math.round(
+          (total / totalExpenses) * 100
+        )}% of expenses)`
+    );
+
+  const budgetStatus = Object.entries(budgets).map(([cat, limit]) => {
+    const spent = catTotals[cat] || 0;
+    const over = spent > limit;
+    return `  ${cat}: ₹${Math.round(spent)} spent / ₹${limit} limit${
+      over ? " ⚠ OVER BUDGET" : ""
+    }`;
+  });
+
+  const topTx = [...expenses]
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    .slice(0, 5)
+    .map((t) => `  ${t.date} — ${t.description}: ₹${Math.abs(t.amount)}`);
+
+  return `You are a personal finance advisor for an Indian user.
+Analyze their spending data and give specific, actionable advice.
+Always reference actual numbers from their data. Keep responses to 3–5 sentences unless asked for more.
+Suggest amounts in Indian Rupees (₹). Be direct, not generic.
+
+=== SPENDING SUMMARY ===
+Total income:   ₹${Math.round(totalIncome)}
+Total expenses: ₹${Math.round(totalExpenses)}
+Net savings:    ₹${Math.round(totalIncome - totalExpenses)}
+Savings rate:   ${savingsRate}%
+
+Top spending categories:
+${topCats.join("\n")}
+
+Budget status:
+${budgetStatus.join("\n")}
+
+Biggest transactions:
+${topTx.join("\n")}`;
+}
+
+// ─── BUTTON STYLE HELPER ──────────────────────────────────────────────────────
+export function btnStyle(color, ghost = false) {
+  return {
+    padding: "8px 16px",
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer",
+    border: ghost ? "1px solid var(--border)" : "none",
+    background: ghost ? "transparent" : color,
+    color: ghost ? "var(--muted)" : "#fff",
+    transition: "opacity 0.15s",
+  };
+}

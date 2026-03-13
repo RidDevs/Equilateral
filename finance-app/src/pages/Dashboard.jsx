@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+
 import StatCard from "../components/StatCard";
 import { CATEGORY_COLORS } from "../constants";
 import { fmt } from "../utils";
