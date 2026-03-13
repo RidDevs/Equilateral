@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Chat from "./pages/Chat";
 import Budgets from "./pages/Budget";
+import Expenses from "../pages/Expenses";
 
 export default function App() {
   const { transactions, addTransactions, resetToSample } = useTransactions();
@@ -62,6 +63,9 @@ export default function App() {
             setBudgets={setBudgets}
             transactions={transactions}
           />
+        )}
+        {tab === "Add expense" && (
+          <Expenses onAdd={addTransactions} />
         )}
       </div>
     </div>
