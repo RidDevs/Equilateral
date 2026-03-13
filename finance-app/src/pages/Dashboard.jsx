@@ -6,6 +6,11 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from "recharts";
 
 import StatCard from "../components/StatCard";
@@ -79,6 +84,58 @@ export default function Dashboard({
       .reduce((s, t) => s + Math.abs(t.amount), 0);
     return income - expenses;
   }, [transactions]);
+
+  const [trendRange, setTrendRange] = useState("week");
+
+  const expenseTrendData = useMemo(() => {
+    const now = new Date();
+    const expenses = transactions.filter((t) => t.type === "expense");
+
+    const makeKey = (d) => {
+      if (trendRange === "week") return d.toISOString().slice(0, 10);
+      if (trendRange === "month") return `${d.getFullYear()}-${d.getMonth()}`;
+      return `${d.getFullYear()}`;
+    };
+
+    const labelFor = (d) => {
+      if (trendRange === "week")
+        return d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+      if (trendRange === "month")
+        return d.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+      return d.getFullYear().toString();
+    };
+
+    const sums = expenses.reduce((acc, t) => {
+      const d = new Date(t.date);
+      const key = makeKey(d);
+      acc[key] = (acc[key] || 0) + Math.abs(t.amount);
+      return acc;
+    }, {});
+
+    const points = [];
+    if (trendRange === "week") {
+      for (let i = 6; i >= 0; i -= 1) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const key = makeKey(d);
+        points.push({ label: labelFor(d), value: Math.round(sums[key] || 0) });
+      }
+    } else if (trendRange === "month") {
+      for (let i = 5; i >= 0; i -= 1) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = makeKey(d);
+        points.push({ label: labelFor(d), value: Math.round(sums[key] || 0) });
+      }
+    } else {
+      for (let i = 4; i >= 0; i -= 1) {
+        const d = new Date(now.getFullYear() - i, 0, 1);
+        const key = makeKey(d);
+        points.push({ label: labelFor(d), value: Math.round(sums[key] || 0) });
+      }
+    }
+
+    return points;
+  }, [transactions, trendRange]);
 
   const topSpendingCats = useMemo(() => {
     const totals = {};
@@ -525,6 +582,62 @@ export default function Dashboard({
             })}
           </div>
         </div>
+      </div>
+
+      {/* ── Expense trends (week / month / year) ── */}
+      <div
+        style={{
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: 12,
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            marginBottom: 12,
+            color: "var(--text)",
+          }}
+        >
+          Expense trends
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+          {[
+            { key: "week", label: "Last 7 days" },
+            { key: "month", label: "Last 6 months" },
+            { key: "year", label: "Last 5 years" },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setTrendRange(opt.key)}
+              style={btnStyle(trendRange === opt.key ? "#1D9E75" : "#888", true)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <ResponsiveContainer width="100%" height={250}>
+          <LineChart data={expenseTrendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="label" tick={{ fontSize: 12, fill: "var(--muted)" }} />
+            <YAxis
+              tickFormatter={(val) => (val ? `₹${val.toLocaleString("en-IN")}` : "")}
+              tick={{ fontSize: 12, fill: "var(--muted)" }}
+            />
+            <Tooltip formatter={(value) => [`₹${value.toLocaleString("en-IN")}`, "Expenses"]} />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#D85A30"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
