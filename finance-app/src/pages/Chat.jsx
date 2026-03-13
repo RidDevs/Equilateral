@@ -44,7 +44,7 @@ export default function Chat({ transactions, budgets }) {
 
     try {
 
-      const systemPrompt = buildSystemPrompt(transactions, budgets);
+      const systemPrompt = buildSystemPrompt(transactions, budgets, goals);
 
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -10,15 +10,30 @@ import {
 
 import StatCard from "../components/StatCard";
 import { CATEGORY_COLORS } from "../constants";
-import { fmt } from "../utils";
+import { fmt, evaluateGoalFeasibility, btnStyle } from "../utils";
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-// Main overview page showing summary stats, spending pie chart, and budget bars.
+// Main overview page showing summary stats, spending pie chart, budget bars, and goals.
 // Props:
 //   transactions  (array)  — all transactions
 //   budgets       (object) — { category: limitAmount }
+//   goals         (array)  — savings goals
+//   addGoal, updateGoal, addSavingsToGoal, deleteGoal
 
-export default function Dashboard({ transactions, budgets }) {
+export default function Dashboard({
+  transactions,
+  budgets,
+  goals = [],
+  addGoal,
+  updateGoal,
+  addSavingsToGoal,
+  deleteGoal,
+}) {
+  const [goalForm, setGoalForm] = useState({
+    name: "",
+    targetAmount: "",
+    deadline: "",
+  });
   const stats = useMemo(() => {
     const income = transactions
       .filter((t) => t.type === "income")
@@ -44,6 +59,38 @@ export default function Dashboard({ transactions, budgets }) {
     return Object.entries(totals)
       .map(([name, value]) => ({ name, value: Math.round(value) }))
       .sort((a, b) => b.value - a.value);
+  }, [transactions]);
+
+  const monthlySavings = useMemo(() => {
+    const now = new Date();
+    const income = transactions
+      .filter((t) => t.type === "income")
+      .filter((t) => {
+        const d = new Date(t.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((s, t) => s + t.amount, 0);
+    const expenses = transactions
+      .filter((t) => t.type === "expense")
+      .filter((t) => {
+        const d = new Date(t.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((s, t) => s + Math.abs(t.amount), 0);
+    return income - expenses;
+  }, [transactions]);
+
+  const topSpendingCats = useMemo(() => {
+    const totals = {};
+    transactions
+      .filter((t) => t.type === "expense")
+      .forEach((t) => {
+        totals[t.category] = (totals[t.category] || 0) + Math.abs(t.amount);
+      });
+    return Object.entries(totals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([c]) => c);
   }, [transactions]);
 
   const budgetData = useMemo(() => {
@@ -89,6 +136,267 @@ export default function Dashboard({ transactions, budgets }) {
           }
           color={stats.savingsRate >= 20 ? "#1D9E75" : "#BA7517"}
         />
+      </div>
+
+      {/* ── Savings Goals ── */}
+      <div
+        style={{
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: 12,
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            marginBottom: 16,
+            color: "var(--text)",
+          }}
+        >
+          Savings Goals
+        </div>
+
+        {/* Create goal form */}
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            flexWrap: "wrap",
+            marginBottom: 20,
+            paddingBottom: 16,
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <input
+            placeholder="Goal name (e.g. Emergency Fund)"
+            value={goalForm.name}
+            onChange={(e) =>
+              setGoalForm((f) => ({ ...f, name: e.target.value }))
+            }
+            style={{
+              flex: 1,
+              minWidth: 140,
+              padding: "8px 12px",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              background: "var(--bg)",
+              color: "var(--text)",
+              fontSize: 13,
+            }}
+          />
+          <input
+            type="number"
+            placeholder="Target ₹"
+            value={goalForm.targetAmount}
+            onChange={(e) =>
+              setGoalForm((f) => ({ ...f, targetAmount: e.target.value }))
+            }
+            style={{
+              width: 120,
+              padding: "8px 12px",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              background: "var(--bg)",
+              color: "var(--text)",
+              fontSize: 13,
+            }}
+          />
+          <input
+            type="date"
+            placeholder="Deadline"
+            value={goalForm.deadline}
+            onChange={(e) =>
+              setGoalForm((f) => ({ ...f, deadline: e.target.value }))
+            }
+            style={{
+              padding: "8px 12px",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              background: "var(--bg)",
+              color: "var(--text)",
+              fontSize: 13,
+            }}
+          />
+          <button
+            onClick={() => {
+              if (goalForm.name && goalForm.targetAmount && goalForm.deadline) {
+                addGoal({
+                  name: goalForm.name,
+                  targetAmount: goalForm.targetAmount,
+                  deadline: goalForm.deadline,
+                  currentSaved: 0,
+                });
+                setGoalForm({ name: "", targetAmount: "", deadline: "" });
+              }
+            }}
+            disabled={
+              !goalForm.name || !goalForm.targetAmount || !goalForm.deadline
+            }
+            style={btnStyle("#1D9E75")}
+          >
+            Add goal
+          </button>
+        </div>
+
+        {/* Goal cards */}
+        {goals.length === 0 ? (
+          <div
+            style={{
+              color: "var(--muted)",
+              fontSize: 13,
+              padding: "12px 0",
+            }}
+          >
+            Create a savings goal above, e.g. Emergency Fund – ₹100,000 by Dec
+            2026.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {goals.map((g) => {
+              const ev = evaluateGoalFeasibility(
+                g,
+                monthlySavings,
+                topSpendingCats
+              );
+              const pct = Math.min(
+                100,
+                g.targetAmount > 0
+                  ? Math.round(((g.currentSaved || 0) / g.targetAmount) * 100)
+                  : 0
+              );
+              return (
+                <div
+                  key={g.id}
+                  style={{
+                    padding: 14,
+                    background: "var(--hover)",
+                    borderRadius: 10,
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          fontSize: 14,
+                          color: "var(--text)",
+                        }}
+                      >
+                        {g.name}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "var(--muted)",
+                          marginTop: 2,
+                        }}
+                      >
+                        {fmt(g.currentSaved || 0)} / {fmt(g.targetAmount)} · by{" "}
+                        {new Date(g.deadline).toLocaleDateString("en-IN", {
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: "3px 8px",
+                        borderRadius: 20,
+                        fontWeight: 500,
+                        background: ev.onTrack ? "#1D9E7522" : "#E24B4A22",
+                        color: ev.onTrack ? "#1D9E75" : "#E24B4A",
+                      }}
+                    >
+                      {ev.onTrack ? "On track" : "Off track"}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 8,
+                      background: "var(--border)",
+                      borderRadius: 4,
+                      overflow: "hidden",
+                      marginBottom: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${pct}%`,
+                        borderRadius: 4,
+                        background: ev.onTrack ? "#1D9E75" : "#BA7517",
+                        transition: "width 0.3s ease",
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--muted)",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {ev.advice}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <input
+                      type="number"
+                      placeholder="Add savings ₹"
+                      style={{
+                        width: 100,
+                        padding: "6px 10px",
+                        border: "1px solid var(--border)",
+                        borderRadius: 6,
+                        background: "var(--bg)",
+                        color: "var(--text)",
+                        fontSize: 12,
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const amt = parseFloat(e.target.value);
+                          if (amt > 0) {
+                            addSavingsToGoal(g.id, amt);
+                            e.target.value = "";
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={(e) => {
+                        const input = e.target.previousElementSibling;
+                        const amt = parseFloat(input?.value || 0);
+                        if (amt > 0) {
+                          addSavingsToGoal(g.id, amt);
+                          if (input) input.value = "";
+                        }
+                      }}
+                      style={btnStyle("#1D9E75", true)}
+                    >
+                      Add
+                    </button>
+                    <button
+                      onClick={() => deleteGoal(g.id)}
+                      style={btnStyle("#888", true)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Charts row ── */}

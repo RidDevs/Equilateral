@@ -58,8 +58,41 @@ export function parseCSV(text) {
     .filter((r) => r.amount !== 0);
 }
 
+// ─── GOAL FEASIBILITY (rule-based) ────────────────────────────────────────────
+export function evaluateGoalFeasibility(goal, monthlySavings, topSpendingCats = []) {
+  const now = new Date();
+  const deadline = new Date(goal.deadline);
+  const remaining = Math.max(0, (goal.targetAmount || 0) - (goal.currentSaved || 0));
+  const monthsLeft = Math.max(
+    1,
+    (deadline.getFullYear() - now.getFullYear()) * 12 +
+      (deadline.getMonth() - now.getMonth())
+  );
+  const requiredPerMonth = remaining / monthsLeft;
+  const onTrack = monthlySavings >= requiredPerMonth;
+  const shortfall = Math.max(0, requiredPerMonth - monthlySavings);
+
+  let advice = "";
+  if (remaining <= 0) {
+    advice = "Goal completed!";
+  } else if (onTrack) {
+    advice = "You're on track.";
+  } else if (shortfall > 0) {
+    advice = `Save ₹${Math.round(shortfall).toLocaleString("en-IN")} more per month to stay on target. Consider reducing spending in categories like ${topSpendingCats.slice(0, 2).join(", ") || "Food, Transport"} or extending your deadline.`;
+  }
+
+  return {
+    onTrack,
+    requiredPerMonth,
+    remaining,
+    monthsLeft,
+    shortfall,
+    advice,
+  };
+}
+
 // ─── BUILD AI SYSTEM PROMPT ───────────────────────────────────────────────────
-export function buildSystemPrompt(transactions, budgets) {
+export function buildSystemPrompt(transactions, budgets, goals = []) {
   const expenses = transactions.filter((t) => t.type === "expense");
   const income = transactions.filter((t) => t.type === "income");
   const totalIncome = income.reduce((s, t) => s + t.amount, 0);
@@ -99,6 +132,41 @@ export function buildSystemPrompt(transactions, budgets) {
     .slice(0, 5)
     .map((t) => `  ${t.date} — ${t.description}: ₹${Math.abs(t.amount)}`);
 
+  const now = new Date();
+  const thisMonthIncome = income
+    .filter((t) => {
+      const d = new Date(t.date);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    })
+    .reduce((s, t) => s + t.amount, 0);
+  const thisMonthExpenses = Math.abs(
+    expenses
+      .filter((t) => {
+        const d = new Date(t.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((s, t) => s + Math.abs(t.amount), 0)
+  );
+  const monthlySavings = thisMonthIncome - thisMonthExpenses;
+
+  const topCatNames = Object.entries(catTotals)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([c]) => c);
+
+  const goalLines = goals.map((g) => {
+    const ev = evaluateGoalFeasibility(g, monthlySavings, topCatNames);
+    const pct = g.targetAmount > 0
+      ? Math.round(((g.currentSaved || 0) / g.targetAmount) * 100)
+      : 0;
+    return `  ${g.name}: ₹${(g.currentSaved || 0).toLocaleString("en-IN")} / ₹${g.targetAmount.toLocaleString("en-IN")} (${pct}%) — ${ev.onTrack ? "On track" : "Off track"} — ${ev.advice}`;
+  });
+
+  const goalsBlock =
+    goalLines.length > 0
+      ? `\nSavings goals:\n${goalLines.join("\n")}`
+      : "";
+
   return `You are a personal finance advisor for an Indian user.
 Analyze their spending data and give specific, actionable advice.
 Always reference actual numbers from their data. Keep responses to 3–5 sentences unless asked for more.
@@ -117,7 +185,8 @@ Budget status:
 ${budgetStatus.join("\n")}
 
 Biggest transactions:
-${topTx.join("\n")}`;
+${topTx.join("\n")}
+${goalsBlock}`;
 }
 
 // ─── BUTTON STYLE HELPER ──────────────────────────────────────────────────────

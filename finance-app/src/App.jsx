@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTransactions, useBudgets } from "./hooks";
+import { useTransactions, useBudgets, useGoals } from "./hooks";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
@@ -10,6 +10,7 @@ import Expenses from "./pages/expenses";
 export default function App() {
   const { transactions, addTransactions, resetToSample } = useTransactions();
   const { budgets, setBudgets } = useBudgets();
+  const { goals, addGoal, updateGoal, addSavingsToGoal, deleteGoal } = useGoals();
   const [tab, setTab] = useState("Dashboard");
 
   return (
@@ -45,7 +46,15 @@ export default function App() {
 
         {/* ── Page routing ── */}
         {tab === "Dashboard" && (
-          <Dashboard transactions={transactions} budgets={budgets} />
+          <Dashboard
+            transactions={transactions}
+            budgets={budgets}
+            goals={goals}
+            addGoal={addGoal}
+            updateGoal={updateGoal}
+            addSavingsToGoal={addSavingsToGoal}
+            deleteGoal={deleteGoal}
+          />
         )}
         {tab === "Transactions" && (
           <Transactions
@@ -55,7 +64,7 @@ export default function App() {
           />
         )}
         {tab === "AI Advisor" && (
-          <Chat transactions={transactions} budgets={budgets} />
+          <Chat transactions={transactions} budgets={budgets} goals={goals} />
         )}
         {tab === "Budgets" && (
           <Budgets
