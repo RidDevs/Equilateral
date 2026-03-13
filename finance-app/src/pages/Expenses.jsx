@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { CATEGORY_COLORS } from "../constants";
 import { btnStyle } from "../utils";
 
 export default function Expenses({ onAdd }) {
@@ -10,7 +9,10 @@ export default function Expenses({ onAdd }) {
   const [type, setType] = useState("expense");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const categories = Object.keys(CATEGORY_COLORS);
+  const expenseCategories = ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Health"];
+  const incomeCategories = ["salary", "credit", "freelance", "payment received", "cashback"];
+
+  const currentCategories = type === "expense" ? expenseCategories : incomeCategories;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -65,7 +67,11 @@ export default function Expenses({ onAdd }) {
             <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", color: "var(--muted)" }}>Type</label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value)}
+              onChange={(e) => {
+                const newType = e.target.value;
+                setType(newType);
+                setCategory(newType === "expense" ? expenseCategories[0] : incomeCategories[0]);
+              }}
               style={{
                 width: "100%",
                 padding: "10px 14px",
@@ -138,9 +144,9 @@ export default function Expenses({ onAdd }) {
                 fontSize: "14px",
               }}
             >
-              {categories.map((c) => (
+              {currentCategories.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {c.charAt(0).toUpperCase() + c.slice(1)}
                 </option>
               ))}
             </select>
