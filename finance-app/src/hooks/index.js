@@ -101,6 +101,31 @@ export function useGoals() {
   return { goals, addGoal, updateGoal, addSavingsToGoal, deleteGoal };
 }
 
+// ─── useChat ──────────────────────────────────────────────────────────────────
+const CHAT_INITIAL = [
+  {
+    role: "assistant",
+    content:
+      "Hi! I've analyzed your spending data. Ask me anything about your finances — I'll give you specific, actionable advice based on your actual numbers.",
+  },
+];
+
+export function useChat() {
+  const [chatMessages, setChatMessages] = useState(CHAT_INITIAL);
+
+  const clearChat = useCallback(() => {
+    setChatMessages([
+      {
+        role: "assistant",
+        content:
+          "Hi! I've analyzed your spending data. Ask me anything about your finances — I'll give you specific, actionable advice based on your actual numbers.",
+      },
+    ]);
+  }, []);
+
+  return { chatMessages, setChatMessages, clearChat };
+}
+
 // ─── useReminders ─────────────────────────────────────────────────────────────
 export function useReminders() {
   const [reminders, setReminders] = useState(() => {

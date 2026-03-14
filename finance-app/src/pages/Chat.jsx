@@ -7,14 +7,9 @@ import { buildSystemPrompt, btnStyle } from "../utils";
 // Experimental AI advisory interface using a minimal rule-based prompt generator.
 
 export default function Chat() {
-  const { transactions, budgets, goals = [] } = useFinance();
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hi! I've analyzed your spending data. Ask me anything about your finances — I'll give you specific, actionable advice based on your actual numbers.",
-    },
-  ]);
+  const { transactions, budgets, goals = [], chatMessages, setChatMessages, clearChat } = useFinance();
+  const messages = chatMessages;
+  const setMessages = setChatMessages;
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -119,6 +114,31 @@ export default function Chat() {
           flexDirection: "column",
         }}
       >
+        {/* Header with Clear chat */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: 10,
+          }}
+        >
+          <button
+            onClick={clearChat}
+            disabled={loading}
+            style={{
+              fontSize: 12,
+              padding: "5px 12px",
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              background: "transparent",
+              color: "var(--muted)",
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading ? 0.6 : 1,
+            }}
+          >
+            Clear chat
+          </button>
+        </div>
 
         {/* Messages */}
 

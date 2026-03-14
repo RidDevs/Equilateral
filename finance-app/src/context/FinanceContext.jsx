@@ -1,19 +1,19 @@
 import { createContext, useContext } from "react";
-import { useTransactions, useBudgets, useGoals } from "../hooks";
+import { useTransactions, useBudgets, useGoals, useChat } from "../hooks";
 
 const FinanceContext = createContext(null);
 
 export function FinanceProvider({ children }) {
-  // Initialize hooks inside the provider
   const transactionsData = useTransactions();
   const budgetsData = useBudgets(transactionsData.transactions);
   const goalsData = useGoals();
+  const chatData = useChat();
 
-  // Combine data logically into a single state
   const value = {
     ...transactionsData,
     ...budgetsData,
     ...goalsData,
+    ...chatData,
   };
 
   return (
