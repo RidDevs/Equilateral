@@ -32,14 +32,24 @@ export const SAMPLE_TRANSACTIONS = [
   { id: 30, date: "2025-03-30", description: "Uber ride",             amount: -260,  type: "expense", category: "Transport" },
 ];
 
-export const DEFAULT_BUDGETS = {
-  Food: 3000,
-  Transport: 2000,
-  Shopping: 3000,
-  Bills: 2500,
-  Entertainment: 1000,
-  Health: 1500,
+// Budget allocations as percentage of total income (shown in Budget page & used for defaults)
+export const BUDGET_PERCENTAGES = {
+  Food: 0.20,
+  Transport: 0.13,
+  Shopping: 0.20,
+  Bills: 0.17,
+  Entertainment: 0.07,
+  Health: 0.10,
 };
+
+export function getDefaultBudgets(totalIncome = 50000) {
+  const income = totalIncome > 0 ? totalIncome : 50000;
+  const budgets = {};
+  for (const [cat, pct] of Object.entries(BUDGET_PERCENTAGES)) {
+    budgets[cat] = Math.round(income * pct);
+  }
+  return budgets;
+}
 
 export const CATEGORY_COLORS = {
   Food: "#1D9E75",

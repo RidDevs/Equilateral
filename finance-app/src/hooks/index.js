@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { SAMPLE_TRANSACTIONS, DEFAULT_BUDGETS } from "../constants";
+import { SAMPLE_TRANSACTIONS, getDefaultBudgets } from "../constants";
 
 // ─── useTransactions ─────────────────────────────────────────────────────────
 export function useTransactions() {
@@ -28,13 +28,18 @@ export function useTransactions() {
 }
 
 // ─── useBudgets ───────────────────────────────────────────────────────────────
-export function useBudgets() {
+export function useBudgets(transactions = []) {
+  // Compute total income from transactions
+  const totalIncome = transactions
+    .filter((tx) => tx.type === "income")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
   const [budgets, setBudgets] = useState(() => {
     try {
       const saved = localStorage.getItem("fin_budgets");
-      return saved ? JSON.parse(saved) : DEFAULT_BUDGETS;
+      return saved ? JSON.parse(saved) : getDefaultBudgets(totalIncome);
     } catch {
-      return DEFAULT_BUDGETS;
+      return getDefaultBudgets(totalIncome);
     }
   });
 
@@ -42,7 +47,7 @@ export function useBudgets() {
     localStorage.setItem("fin_budgets", JSON.stringify(budgets));
   }, [budgets]);
 
-  return { budgets, setBudgets };
+  return { budgets, setBudgets, totalIncome };
 }
 
 // ─── useGoals ─────────────────────────────────────────────────────────────────

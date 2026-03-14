@@ -6,7 +6,7 @@ const FinanceContext = createContext(null);
 export function FinanceProvider({ children }) {
   // Initialize hooks inside the provider
   const transactionsData = useTransactions();
-  const budgetsData = useBudgets();
+  const budgetsData = useBudgets(transactionsData.transactions);
   const goalsData = useGoals();
 
   // Combine data logically into a single state
