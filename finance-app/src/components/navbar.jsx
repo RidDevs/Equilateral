@@ -11,7 +11,7 @@ import { useFinance } from "../context/FinanceContext";
 export default function Navbar({ tab, setTab }) {
   const { transactions } = useFinance();
   const txCount = transactions?.length || 0;
-  
+
   const now = new Date();
   const monthName = now.toLocaleString("default", { month: "long" });
   const year = now.getFullYear();
