@@ -13,18 +13,15 @@ export default function Navbar({ tab, setTab }) {
   const txCount = transactions?.length || 0;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 28,
-      }}
-    >
-      {/* Title */}
+    <div style={{ marginBottom: 20 }}>
+      {/* Title section */}
       <div>
         <div
-          style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.5px" }}
+          style={{
+            fontSize: "clamp(20px, 5vw, 24px)",
+            fontWeight: 600,
+            letterSpacing: "-0.5px",
+          }}
         >
           Finance Advisor
         </div>
@@ -33,7 +30,7 @@ export default function Navbar({ tab, setTab }) {
         </div>
       </div>
 
-      {/* Tab switcher */}
+      {/* Tab switcher - scrollable on mobile */}
       <div
         style={{
           display: "flex",
@@ -42,6 +39,9 @@ export default function Navbar({ tab, setTab }) {
           border: "1px solid var(--border)",
           borderRadius: 10,
           padding: 4,
+          overflowX: "auto",
+          overflowY: "hidden",
+          marginTop: 12,
         }}
       >
         {TABS.map((t) => (
@@ -49,15 +49,17 @@ export default function Navbar({ tab, setTab }) {
             key={t}
             onClick={() => setTab(t)}
             style={{
-              padding: "6px 14px",
+              padding: "8px 12px",
               borderRadius: 7,
-              fontSize: 13,
+              fontSize: "clamp(11px, 2.5vw, 13px)",
               fontWeight: 500,
               border: "none",
               cursor: "pointer",
               transition: "all 0.15s",
               background: tab === t ? "#1D9E75" : "transparent",
               color: tab === t ? "#fff" : "var(--muted)",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             {t}

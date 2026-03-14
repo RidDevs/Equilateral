@@ -166,9 +166,9 @@ export default function Dashboard() {
   }, [transactions, budgets]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 20px)" }}>
       {/* ── Summary stat cards ── */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: "clamp(8px, 2vw, 12px)", flexWrap: "wrap" }}>
         <StatCard
           label="Total income"
           value={fmt(stats.income)}
@@ -196,11 +196,12 @@ export default function Dashboard() {
 
       {/* ── Savings Goals ── */}
       <div
+        className="card-section"
         style={{
           background: "var(--card)",
           border: "1px solid var(--border)",
           borderRadius: 12,
-          padding: 20,
+          padding: "clamp(14px, 4vw, 20px)",
         }}
       >
         <div
@@ -217,9 +218,9 @@ export default function Dashboard() {
         {/* Create goal form */}
         <div
           style={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
             gap: 12,
-            flexWrap: "wrap",
             marginBottom: 20,
             paddingBottom: 16,
             borderBottom: "1px solid var(--border)",
@@ -232,9 +233,8 @@ export default function Dashboard() {
               setGoalForm((f) => ({ ...f, name: e.target.value }))
             }
             style={{
-              flex: 1,
-              minWidth: 140,
-              padding: "8px 12px",
+              gridColumn: "1 / -1",
+              padding: "10px 12px",
               border: "1px solid var(--border)",
               borderRadius: 8,
               background: "var(--bg)",
@@ -250,8 +250,7 @@ export default function Dashboard() {
               setGoalForm((f) => ({ ...f, targetAmount: e.target.value }))
             }
             style={{
-              width: 120,
-              padding: "8px 12px",
+              padding: "10px 12px",
               border: "1px solid var(--border)",
               borderRadius: 8,
               background: "var(--bg)",
@@ -267,7 +266,7 @@ export default function Dashboard() {
               setGoalForm((f) => ({ ...f, deadline: e.target.value }))
             }
             style={{
-              padding: "8px 12px",
+              padding: "10px 12px",
               border: "1px solid var(--border)",
               borderRadius: 8,
               background: "var(--bg)",
@@ -457,15 +456,17 @@ export default function Dashboard() {
 
       {/* ── Charts row ── */}
       <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+        className="charts-grid"
+        style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}
       >
         {/* Pie chart */}
         <div
+          className="card-section"
           style={{
             background: "var(--card)",
             border: "1px solid var(--border)",
             borderRadius: 12,
-            padding: 20,
+            padding: "clamp(14px, 4vw, 20px)",
           }}
         >
           <div
@@ -510,11 +511,12 @@ export default function Dashboard() {
 
         {/* Budget progress bars */}
         <div
+          className="card-section"
           style={{
             background: "var(--card)",
             border: "1px solid var(--border)",
             borderRadius: 12,
-            padding: 20,
+            padding: "clamp(14px, 4vw, 20px)",
           }}
         >
           <div
@@ -585,11 +587,12 @@ export default function Dashboard() {
 
       {/* ── Expense trends (week / month / year) ── */}
       <div
+        className="card-section"
         style={{
           background: "var(--card)",
           border: "1px solid var(--border)",
           borderRadius: 12,
-          padding: 20,
+          padding: "clamp(14px, 4vw, 20px)",
         }}
       >
         <div
