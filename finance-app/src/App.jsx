@@ -2,7 +2,7 @@ import { useState } from "react";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
-import Chat from "./pages/Chat";
+import AIAdvisor from "./pages/AIAdvisor";
 import Budgets from "./pages/Budget";
 import Expenses from "./pages/Expenses";
 
@@ -54,7 +54,7 @@ export default function App() {
         {/* ── Page routing ── */}
         {tab === "Dashboard" && <Dashboard />}
         {tab === "Transactions" && <Transactions />}
-        {tab === "AI Advisor" && <Chat />}
+        {tab === "AI Advisor" && <AIAdvisor />}
         {tab === "Budgets" && <Budgets />}
         {tab === "Bill Reminders" && <BillReminders />}
         {tab === "Add expense/income" && <Expenses />}

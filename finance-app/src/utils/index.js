@@ -91,6 +91,115 @@ export function evaluateGoalFeasibility(goal, monthlySavings, topSpendingCats = 
   };
 }
 
+// ─── HIGHLIGHTS SUMMARY (for AI highlights API) ─────────────────────────────────
+export function buildHighlightsSummary(transactions = [], budgets = {}, goals = []) {
+  const tx = Array.isArray(transactions) ? transactions : [];
+  const expenses = tx.filter((t) => t.type === "expense");
+  const income = tx.filter((t) => t.type === "income");
+  const totalIncome = income.reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = Math.abs(expenses.reduce((s, t) => s + t.amount, 0));
+  const savings = totalIncome - totalExpenses;
+  const savingsRate = totalIncome > 0 ? Math.round(((savings / totalIncome) * 100)) : 0;
+
+  const catTotals = {};
+  expenses.forEach((t) => {
+    catTotals[t.category] = (catTotals[t.category] || 0) + Math.abs(t.amount);
+  });
+
+  const categoryBreakdown = Object.entries(catTotals).map(([cat, total]) => ({
+    category: cat,
+    total: Math.round(total),
+    pct: totalExpenses > 0 ? Math.round((total / totalExpenses) * 100) : 0,
+  }));
+
+  const budgetStatus = Object.entries(budgets || {}).map(([cat, limit]) => ({
+    category: cat,
+    spent: Math.round(catTotals[cat] || 0),
+    limit,
+    over: (catTotals[cat] || 0) > limit,
+  }));
+
+  return {
+    totalIncome: Math.round(totalIncome),
+    totalExpenses,
+    savings: Math.round(savings),
+    savingsRate,
+    categoryBreakdown,
+    budgetStatus,
+    goalsCount: Array.isArray(goals) ? goals.length : 0,
+  };
+}
+
+// ─── RULE-BASED INSIGHTS (fallback when AI unavailable) ─────────────────────────
+export function getRuleBasedInsights(transactions = [], budgets = {}) {
+  const tx = Array.isArray(transactions) ? transactions : [];
+  const expenses = tx.filter((t) => t.type === "expense");
+  const income = tx.filter((t) => t.type === "income");
+  const totalIncome = income.reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = Math.abs(expenses.reduce((s, t) => s + t.amount, 0));
+  const savings = totalIncome - totalExpenses;
+  const savingsRate = totalIncome > 0 ? Math.round(((savings / totalIncome) * 100)) : 0;
+
+  const catTotals = {};
+  expenses.forEach((t) => {
+    catTotals[t.category] = (catTotals[t.category] || 0) + Math.abs(t.amount);
+  });
+
+  const insights = [];
+
+  if (savingsRate < 20 && totalIncome > 0) {
+    insights.push({
+      type: "warning",
+      title: "Low savings rate",
+      body: `Your savings rate is ${savingsRate}%. Aim for at least 20% to build a safety net.`,
+      category: "savings",
+    });
+  } else if (savingsRate >= 20) {
+    insights.push({
+      type: "tip",
+      title: "Good savings habit",
+      body: `You're saving ${savingsRate}% of income. Keep it up!`,
+      category: "savings",
+    });
+  }
+
+  Object.entries(budgets || {}).forEach(([cat, limit]) => {
+    const spent = catTotals[cat] || 0;
+    if (spent > limit) {
+      insights.push({
+        type: "warning",
+        title: `Over budget: ${cat}`,
+        body: `You've spent ₹${Math.round(spent).toLocaleString("en-IN")} vs ₹${limit.toLocaleString("en-IN")} limit.`,
+        category: "budgeting",
+      });
+    }
+  });
+
+  const topCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
+  if (topCat && totalExpenses > 0) {
+    const pct = Math.round((topCat[1] / totalExpenses) * 100);
+    if (pct > 40) {
+      insights.push({
+        type: "info",
+        title: `Top spending: ${topCat[0]}`,
+        body: `${topCat[0]} is ${pct}% of your expenses. Consider tracking it closely.`,
+        category: "spending",
+      });
+    }
+  }
+
+  if (insights.length === 0 && tx.length > 0) {
+    insights.push({
+      type: "tip",
+      title: "You're on track",
+      body: "No major alerts. Keep tracking your spending.",
+      category: "overview",
+    });
+  }
+
+  return insights;
+}
+
 // ─── BUILD AI SYSTEM PROMPT ───────────────────────────────────────────────────
 export function buildSystemPrompt(transactions = [], budgets = {}, goals = []) {
   const tx = Array.isArray(transactions) ? transactions : [];
@@ -173,6 +282,30 @@ Analyze their spending data and give specific, actionable advice.
 Always reference actual numbers from their data. Keep responses to 3–5 sentences unless asked for more.
 Suggest amounts in Indian Rupees (₹). Be direct, not generic.
 
+=== ADDING TRANSACTIONS ===
+When the user asks you to ADD, LOG, or RECORD a transaction (expense or income), you MUST include a JSON block in your response using this exact format:
+
+\`\`\`json
+[TRANSACTIONS]
+[
+  {
+    "description": "Short description of the transaction",
+    "amount": 500,
+    "type": "expense",
+    "category": "Food"
+  }
+]
+\`\`\`
+
+Rules for the JSON block:
+- "amount" must be a positive number (no sign, no currency symbol).
+- "type" must be "expense" or "income".
+- "category" must be one of: Food, Transport, Shopping, Bills, Entertainment, Health, Income, Other.
+  For income transactions, use "Income" as the category.
+- You may include multiple transactions in the array if the user asks for more than one.
+- ALWAYS include a short, friendly confirmation message OUTSIDE the JSON block so the user knows what was added.
+- If the user's request is ambiguous, ask for clarification instead of guessing.
+
 === SPENDING SUMMARY ===
 Total income:   ₹${Math.round(totalIncome)}
 Total expenses: ₹${Math.round(totalExpenses)}
@@ -188,6 +321,52 @@ ${budgetStatus.join("\n")}
 Biggest transactions:
 ${topTx.join("\n")}
 ${goalsBlock}`;
+}
+
+// ─── PARSE TRANSACTIONS FROM AI REPLY ─────────────────────────────────────────
+// Extracts a [TRANSACTIONS] JSON block from an AI reply string.
+// Returns { transactions: [...], cleanReply: "..." }
+export function parseTransactionsFromReply(reply) {
+  const result = { transactions: [], cleanReply: reply };
+  if (!reply) return result;
+
+  // Match ```json\n[TRANSACTIONS]\n[...]\n```
+  const regex = /```json\s*\n\s*\[TRANSACTIONS\]\s*\n([\s\S]*?)```/;
+  const match = reply.match(regex);
+  if (!match) return result;
+
+  try {
+    const parsed = JSON.parse(match[1].trim());
+    const arr = Array.isArray(parsed) ? parsed : [parsed];
+
+    const VALID_CATEGORIES = [
+      "Food", "Transport", "Shopping", "Bills",
+      "Entertainment", "Health", "Income", "Other",
+    ];
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    const txns = arr
+      .filter((t) => t && typeof t.amount === "number" && t.amount > 0 && t.description)
+      .map((t, i) => ({
+        id: Date.now() + i,
+        date: t.date || today,
+        description: t.description,
+        amount: t.type === "expense" ? -Math.abs(t.amount) : Math.abs(t.amount),
+        type: t.type === "income" ? "income" : "expense",
+        category: VALID_CATEGORIES.includes(t.category) ? t.category : categorize(t.description),
+      }));
+
+    if (txns.length > 0) {
+      result.transactions = txns;
+      // Strip the JSON block from the displayed reply
+      result.cleanReply = reply.replace(regex, "").trim();
+    }
+  } catch {
+    // JSON parse failed — return original reply as-is
+  }
+
+  return result;
 }
 
 // ─── BUTTON STYLE HELPER ──────────────────────────────────────────────────────

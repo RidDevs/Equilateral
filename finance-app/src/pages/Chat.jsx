@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { SUGGESTIONS } from "../constants";
 import { useFinance } from "../context/FinanceContext";
-import { buildSystemPrompt, btnStyle } from "../utils";
+import { buildSystemPrompt, btnStyle, parseTransactionsFromReply } from "../utils";
 
 // ─── Chat ───────────────────────────────────────────────────────────────────
 // Experimental AI advisory interface using a minimal rule-based prompt generator.
 
 export default function Chat() {
-  const { transactions, budgets, goals = [], chatMessages, setChatMessages, clearChat } = useFinance();
+  const { transactions, budgets, goals = [], chatMessages, setChatMessages, clearChat, addTransactions } = useFinance();
   const messages = chatMessages;
   const setMessages = setChatMessages;
 
@@ -67,11 +67,21 @@ export default function Chat() {
         throw new Error(data.error || "API error");
       }
 
-      const reply = data.reply || "Sorry, I couldn't generate a response.";
+      const rawReply = data.reply || "Sorry, I couldn't generate a response.";
+
+      // Check if the AI included transaction data
+      const { transactions: newTxns, cleanReply } = parseTransactionsFromReply(rawReply);
+      if (newTxns.length > 0) {
+        addTransactions(newTxns);
+      }
+
+      const displayContent = newTxns.length > 0
+        ? `${cleanReply}\n\n✅ Added ${newTxns.length} transaction(s) to your records.`
+        : cleanReply;
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: reply },
+        { role: "assistant", content: displayContent },
       ]);
 
     } catch (err) {

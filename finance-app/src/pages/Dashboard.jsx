@@ -14,6 +14,7 @@ import {
 } from "recharts";
 
 import StatCard from "../components/StatCard";
+import NewsHighlights from "../components/NewsHighlights";
 import { CATEGORY_COLORS } from "../constants";
 import { fmt, evaluateGoalFeasibility, btnStyle } from "../utils";
 import { useReminders } from "../hooks";
@@ -189,6 +190,9 @@ export default function Dashboard() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px, 3vw, 20px)" }}>
+      {/* ── News highlights (below navbar) ── */}
+      <NewsHighlights />
+
       {/* ── Summary stat cards ── */}
       <div style={{ display: "flex", gap: "clamp(8px, 2vw, 12px)", flexWrap: "wrap" }}>
         <StatCard
