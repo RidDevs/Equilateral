@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useFinance } from "../context/FinanceContext";
+import { btnStyle } from "../utils";
 
 export default function Expenses() {
   const { addTransactions: onAdd } = useFinance();
