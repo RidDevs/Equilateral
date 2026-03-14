@@ -92,9 +92,10 @@ export function evaluateGoalFeasibility(goal, monthlySavings, topSpendingCats = 
 }
 
 // ─── BUILD AI SYSTEM PROMPT ───────────────────────────────────────────────────
-export function buildSystemPrompt(transactions, budgets, goals = []) {
-  const expenses = transactions.filter((t) => t.type === "expense");
-  const income = transactions.filter((t) => t.type === "income");
+export function buildSystemPrompt(transactions = [], budgets = {}, goals = []) {
+  const tx = Array.isArray(transactions) ? transactions : [];
+  const expenses = tx.filter((t) => t.type === "expense");
+  const income = tx.filter((t) => t.type === "income");
   const totalIncome = income.reduce((s, t) => s + t.amount, 0);
   const totalExpenses = Math.abs(
     expenses.reduce((s, t) => s + t.amount, 0)
@@ -119,7 +120,7 @@ export function buildSystemPrompt(transactions, budgets, goals = []) {
         )}% of expenses)`
     );
 
-  const budgetStatus = Object.entries(budgets).map(([cat, limit]) => {
+  const budgetStatus = Object.entries(budgets || {}).map(([cat, limit]) => {
     const spent = catTotals[cat] || 0;
     const over = spent > limit;
     return `  ${cat}: ₹${Math.round(spent)} spent / ₹${limit} limit${

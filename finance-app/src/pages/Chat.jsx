@@ -3,9 +3,6 @@ import { SUGGESTIONS } from "../constants";
 import { useFinance } from "../context/FinanceContext";
 import { buildSystemPrompt, btnStyle } from "../utils";
 
-
-const GEMINI_API_KEY = "AIzaSyB4x0oXOsd9zhrjl8rE1xw13VMQI98XehY";
-
 // ─── Chat ───────────────────────────────────────────────────────────────────
 // Experimental AI advisory interface using a minimal rule-based prompt generator.
 
@@ -48,46 +45,34 @@ export default function Chat() {
 
     try {
 
-      const systemPrompt = buildSystemPrompt(transactions, budgets, goals);
-
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-
-            systemInstruction: {
-              parts: [{ text: systemPrompt }],
-            },
-
-            contents: updatedMessages.map((m) => ({
-              role: m.role === "assistant" ? "model" : "user",
-              parts: [{ text: m.content }],
-            })),
-
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1024,
-            },
-
-          }),
-        }
+      const systemPrompt = buildSystemPrompt(
+        transactions || [],
+        budgets || {},
+        goals || []
       );
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || "API error");
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemPrompt,
+          messages: updatedMessages,
+        }),
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Could not connect to AI service. Is the backend running?");
       }
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "API error");
+      }
 
-      const reply =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Sorry, I couldn't generate a response.";
+      const reply = data.reply || "Sorry, I couldn't generate a response.";
 
       setMessages((prev) => [
         ...prev,
