@@ -47,9 +47,9 @@ export default function Transactions() {
       {/* ── Toolbar ── */}
       <div
         style={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
           gap: 10,
-          flexWrap: "wrap",
           alignItems: "center",
         }}
       >
@@ -58,9 +58,8 @@ export default function Transactions() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
-            flex: 1,
-            minWidth: 180,
-            padding: "8px 12px",
+            gridColumn: "1 / -1",
+            padding: "10px 12px",
             border: "1px solid var(--border)",
             borderRadius: 8,
             background: "var(--card)",
@@ -72,7 +71,7 @@ export default function Transactions() {
           value={catFilter}
           onChange={(e) => setCatFilter(e.target.value)}
           style={{
-            padding: "8px 12px",
+            padding: "10px 12px",
             border: "1px solid var(--border)",
             borderRadius: 8,
             background: "var(--card)",

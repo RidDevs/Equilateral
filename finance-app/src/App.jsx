@@ -34,9 +34,17 @@ export default function App() {
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        @media (max-width: 768px) {
+          input, button { font-size: 16px !important; }
+          .goal-form { gridTemplateColumns: 1fr !important; }
+          .card-section { padding: 16px !important; }
+        }
+        @media (min-width: 769px) {
+          .charts-grid { gridTemplateColumns: 1fr 1fr !important; }
+        }
       `}</style>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 20px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 16px" }}>
         {/* ── Navigation ── */}
         <Navbar tab={tab} setTab={setTab} />
 
