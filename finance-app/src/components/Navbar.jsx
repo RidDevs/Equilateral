@@ -1,12 +1,5 @@
 import { TABS } from "../constants";
 
-// ─── Navbar ───────────────────────────────────────────────────────────────────
-// Top navigation bar with app title and tab switcher.
-// Props:
-//   tab          (string)              — currently active tab
-//   setTab       (fn)                  — tab setter
-//   txCount      (number)              — transaction count shown in subtitle
-
 export default function Navbar({ tab, setTab, txCount }) {
   return (
     <div
@@ -22,10 +15,10 @@ export default function Navbar({ tab, setTab, txCount }) {
         <div
           style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.5px" }}
         >
-          Finance Advisor
+          Expenzo
         </div>
         <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
-          {txCount} transactions · March 2025
+          {txCount} Transactions · March 
         </div>
       </div>
 
