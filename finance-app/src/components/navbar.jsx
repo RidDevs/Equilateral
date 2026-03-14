@@ -1,4 +1,5 @@
 import { TABS } from "../constants";
+import { useFinance } from "../context/FinanceContext";
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 // Top navigation bar with app title and tab switcher.
@@ -7,7 +8,14 @@ import { TABS } from "../constants";
 //   setTab       (fn)                  — tab setter
 //   txCount      (number)              — transaction count shown in subtitle
 
-export default function Navbar({ tab, setTab, txCount }) {
+export default function Navbar({ tab, setTab }) {
+  const { transactions } = useFinance();
+  const txCount = transactions?.length || 0;
+  
+  const now = new Date();
+  const monthName = now.toLocaleString("default", { month: "long" });
+  const year = now.getFullYear();
+
   return (
     <div
       style={{
@@ -22,10 +30,10 @@ export default function Navbar({ tab, setTab, txCount }) {
         <div
           style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.5px" }}
         >
-          Finance Advisor
+          EXPENZO
         </div>
         <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
-          {txCount} transactions · March 2025
+          {txCount} transactions · {monthName} {year}
         </div>
       </div>
 
