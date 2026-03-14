@@ -1,9 +1,23 @@
 import { useState, useMemo } from "react";
 import { useReminders } from "../hooks";
+import { useFinance } from "../context/FinanceContext";
 import { fmt, btnStyle } from "../utils";
 
 export default function BillReminders() {
   const { reminders, addReminder, updateReminder, deleteReminder, toggleReminder, markAsPaid, markAsUnpaid } = useReminders();
+  const { addTransactions } = useFinance();
+
+  const handleMarkAsPaid = (reminder) => {
+    addTransactions([{
+      id: Date.now(),
+      date: new Date().toISOString().slice(0, 10),
+      description: reminder.name,
+      amount: -Math.abs(Number(reminder.amount)),
+      type: "expense",
+      category: reminder.category || "Bills",
+    }]);
+    markAsPaid(reminder.id);
+  };
   const [form, setForm] = useState({
     name: "",
     dueDate: "",
@@ -342,7 +356,7 @@ export default function BillReminders() {
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button
-                    onClick={() => markAsPaid(reminder.id)}
+                    onClick={() => handleMarkAsPaid(reminder)}
                     style={btnStyle("#1D9E75")}
                   >
                     Mark as Paid
