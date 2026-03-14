@@ -5,7 +5,10 @@ import Transactions from "./pages/Transactions";
 import Chat from "./pages/Chat";
 import Budgets from "./pages/Budget";
 import Expenses from "./pages/Expenses";
+<<<<<<< HEAD
 import BillReminders from "./pages/BillReminders";
+=======
+>>>>>>> e3a7504631ba56501f09c7d451741ddb43d3c673
 
 export default function App() {
   const [tab, setTab] = useState("Dashboard");

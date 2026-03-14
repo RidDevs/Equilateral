@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
-import { CATEGORY_COLORS } from "../constants";
+import { CATEGORY_COLORS, BUDGET_PERCENTAGES, getDefaultBudgets } from "../constants";
 
 import { useFinance } from "../context/FinanceContext";
 
 // ─── Budget ───────────────────────────────────────────────────────────────────
-// Category limits and progress vs actual spending.
+// Category limits and progress vs actual spending. Uses BUDGET_PERCENTAGES for defaults.
 
 export default function Budget() {
-  const { budgets, setBudgets, transactions } = useFinance();
+  const { budgets, setBudgets, transactions, totalIncome } = useFinance();
   const [editCat, setEditCat] = useState(null);
   const catTotals = useMemo(() => {
     const t = {};
@@ -19,13 +19,40 @@ export default function Budget() {
     return t;
   }, [transactions]);
 
+  const handleResetToDefaults = () => {
+    setBudgets(getDefaultBudgets(totalIncome || 50000));
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div
-        style={{ fontSize: 13, color: "var(--muted)", marginBottom: 4 }}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 8,
+          marginBottom: 4,
+        }}
       >
-        Set monthly limits per category. Bars turn red when you exceed your
-        budget.
+        <div style={{ fontSize: 13, color: "var(--muted)" }}>
+          Monthly limits per category, derived from a percentage of your income.
+          Bars turn red when you exceed your budget.
+        </div>
+        <button
+          onClick={handleResetToDefaults}
+          style={{
+            padding: "6px 12px",
+            background: "var(--border)",
+            border: "none",
+            borderRadius: 6,
+            color: "var(--text)",
+            fontSize: 12,
+            cursor: "pointer",
+          }}
+        >
+          Apply default allocation
+        </button>
       </div>
 
       {Object.entries(budgets).map(([cat, limit]) => {
@@ -72,6 +99,18 @@ export default function Budget() {
                   }}
                 >
                   {cat}
+                  {BUDGET_PERCENTAGES[cat] != null && (
+                    <span
+                      style={{
+                        fontWeight: 400,
+                        color: "var(--muted)",
+                        marginLeft: 6,
+                        fontSize: 12,
+                      }}
+                    >
+                      ({Math.round((BUDGET_PERCENTAGES[cat] || 0) * 100)}%)
+                    </span>
+                  )}
                 </span>
                 {over && (
                   <span
