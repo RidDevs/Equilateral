@@ -40,7 +40,7 @@ export const KEYWORD_MAP = {
   Income:        ["salary", "credit", "freelance", "payment received", "cashback"],
 };
 
-export const TABS = ["Dashboard", "Transactions", "AI Advisor", "Budgets","Add expense/income",];
+export const TABS = ["Dashboard", "Transactions", "AI Advisor", "Budgets","Bill Reminders","Add expense/income"];
 
 export const SUGGESTIONS = [
   "Where am I overspending?",
