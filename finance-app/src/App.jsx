@@ -4,7 +4,8 @@ import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Chat from "./pages/Chat";
 import Budgets from "./pages/Budget";
-import Expenses from "./pages/expenses";
+import Expenses from "./pages/Expenses";
+import BillReminders from "./pages/BillReminders";
 
 export default function App() {
   const [tab, setTab] = useState("Dashboard");
@@ -53,6 +54,7 @@ export default function App() {
         {tab === "Transactions" && <Transactions />}
         {tab === "AI Advisor" && <Chat />}
         {tab === "Budgets" && <Budgets />}
+        {tab === "Bill Reminders" && <BillReminders />}
         {tab === "Add expense/income" && <Expenses />}
       </div>
     </div>

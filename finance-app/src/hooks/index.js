@@ -95,3 +95,112 @@ export function useGoals() {
 
   return { goals, addGoal, updateGoal, addSavingsToGoal, deleteGoal };
 }
+
+// ─── useReminders ─────────────────────────────────────────────────────────────
+export function useReminders() {
+  const [reminders, setReminders] = useState(() => {
+    try {
+      const saved = localStorage.getItem("fin_reminders");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("fin_reminders", JSON.stringify(reminders));
+  }, [reminders]);
+
+  const addReminder = useCallback((reminder) => {
+    const newReminder = {
+      id: Date.now(),
+      name: reminder.name,
+      dueDate: reminder.dueDate,
+      amount: Number(reminder.amount) || 0,
+      category: reminder.category || "Bills",
+      frequency: reminder.frequency || "one-time",
+      isActive: true,
+      isPaid: false,
+      paidDate: null,
+    };
+    setReminders((prev) => [...prev, newReminder]);
+  }, []);
+
+  const updateReminder = useCallback((id, updates) => {
+    setReminders((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, ...updates } : r
+      )
+    );
+  }, []);
+
+  const deleteReminder = useCallback((id) => {
+    setReminders((prev) => prev.filter((r) => r.id !== id));
+  }, []);
+
+  const toggleReminder = useCallback((id) => {
+    setReminders((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, isActive: !r.isActive } : r
+      )
+    );
+  }, []);
+
+  const markAsPaid = useCallback((id) => {
+    setReminders((prev) => {
+      const updatedReminders = prev.map((r) => {
+        if (r.id === id) {
+          const paidReminder = {
+            ...r,
+            isPaid: true,
+            paidDate: new Date().toISOString().slice(0, 10),
+          };
+
+          // If recurring, create a new reminder for next occurrence
+          if (r.frequency === "monthly" || r.frequency === "yearly") {
+            const currentDueDate = new Date(r.dueDate);
+            let nextDueDate;
+
+            if (r.frequency === "monthly") {
+              nextDueDate = new Date(currentDueDate);
+              nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+            } else if (r.frequency === "yearly") {
+              nextDueDate = new Date(currentDueDate);
+              nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
+            }
+
+            const nextReminderString = nextDueDate.toISOString().slice(0, 10);
+
+            // Add new reminder to the list
+            prev.push({
+              id: Date.now() + Math.random(),
+              name: r.name,
+              dueDate: nextReminderString,
+              amount: r.amount,
+              category: r.category,
+              frequency: r.frequency,
+              isActive: true,
+              isPaid: false,
+              paidDate: null,
+            });
+          }
+
+          return paidReminder;
+        }
+        return r;
+      });
+
+      return updatedReminders;
+    });
+  }, []);
+
+  const markAsUnpaid = useCallback((id) => {
+    setReminders((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, isPaid: false, paidDate: null } : r
+      )
+    );
+  }, []);
+
+  return { reminders, addReminder, updateReminder, deleteReminder, toggleReminder, markAsPaid, markAsUnpaid };
+}

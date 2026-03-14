@@ -16,6 +16,7 @@ import {
 import StatCard from "../components/StatCard";
 import { CATEGORY_COLORS } from "../constants";
 import { fmt, evaluateGoalFeasibility, btnStyle } from "../utils";
+import { useReminders } from "../hooks";
 
 import { useFinance } from "../context/FinanceContext";
 
@@ -32,6 +33,7 @@ export default function Dashboard() {
     addSavingsToGoal,
     deleteGoal,
   } = useFinance();
+  const { reminders } = useReminders();
 
   const [goalForm, setGoalForm] = useState({
     name: "",
@@ -135,6 +137,26 @@ export default function Dashboard() {
 
     return points;
   }, [transactions, trendRange]);
+
+  const upcomingReminders = useMemo(() => {
+    const now = new Date();
+    return reminders
+      .filter((r) => r.isActive)
+      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+      .slice(0, 5)
+      .map((r) => {
+        const dueDate = new Date(r.dueDate);
+        const daysUntil = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+        const isOverdue = daysUntil < 0;
+        const isUrgent = daysUntil <= 3 && daysUntil >= 0;
+        return {
+          ...r,
+          daysUntil,
+          isOverdue,
+          isUrgent,
+        };
+      });
+  }, [reminders]);
 
   const topSpendingCats = useMemo(() => {
     const totals = {};
@@ -641,6 +663,85 @@ export default function Dashboard() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {/* ── Upcoming Bill Reminders ── */}
+      {upcomingReminders.length > 0 && (
+        <div
+          className="card-section"
+          style={{
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            padding: "clamp(14px, 4vw, 20px)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              marginBottom: 16,
+              color: "var(--text)",
+            }}
+          >
+            Upcoming Bills
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {upcomingReminders.map((reminder) => {
+              const statusColor = reminder.isOverdue ? "#E24B4A" : reminder.isUrgent ? "#BA7517" : "#1D9E75";
+              const statusText =
+                reminder.daysUntil < 0
+                  ? `${Math.abs(reminder.daysUntil)} days overdue`
+                  : reminder.daysUntil === 0
+                  ? "Due today"
+                  : reminder.daysUntil === 1
+                  ? "Due tomorrow"
+                  : `${reminder.daysUntil} days left`;
+
+              return (
+                <div
+                  key={reminder.id}
+                  style={{
+                    padding: 12,
+                    background: "var(--hover)",
+                    borderRadius: 8,
+                    border: `1px solid ${statusColor}33`,
+                    borderLeft: `3px solid ${statusColor}`,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: 13, color: "var(--text)" }}>
+                      {reminder.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                      {fmt(reminder.amount)} · {statusText}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      fontWeight: 500,
+                      background: `${statusColor}22`,
+                      color: statusColor,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {new Date(reminder.dueDate).toLocaleDateString("en-IN", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
